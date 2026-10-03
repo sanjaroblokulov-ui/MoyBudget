@@ -166,11 +166,11 @@ body.light .pill{background:#e6edf6;color:#34527a}
     <div class="formgrid">
       <div class="field">
         <label for="income" data-i18n="incomeInput">Доход / зарплата этого месяца (сум)</label>
-        <input id="income" type="number" min="0" step="1">
+        <input id="income" type="number" min="0" step="0.01">
       </div>
       <div class="field">
         <label for="reserve" data-i18n="reserveInput">Резерв на непредвиденное (сум)</label>
-        <input id="reserve" type="number" min="0" step="1">
+        <input id="reserve" type="number" min="0" step="0.01">
       </div>
       <div class="field full">
         <label for="threshold" data-i18n="thresholdLabel">Предупреждать при, %</label>
@@ -215,7 +215,7 @@ body.light .pill{background:#e6edf6;color:#34527a}
         </div>
         <div class="field">
           <label for="amount" data-i18n="amountLabel">Сумма (сум)</label>
-          <input id="amount" type="number" min="0.01" step="1" placeholder="234000" required>
+          <input id="amount" type="text" inputmode="decimal" min="0.01" step="0.01" placeholder="234000,01" required>
         </div>
         <div class="field">
           <label for="category" data-i18n="categoryLabel">Категория</label>
@@ -304,7 +304,12 @@ const themeKey='myBudgetThemeV1';
 const d=new Date();
 const dateStr=x=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
 const monthName=m=>new Date(m+'-01T00:00:00').toLocaleDateString(lang==='uz'?'uz-UZ':'ru-RU',{month:'long',year:'numeric'});
-const fmt=n=>new Intl.NumberFormat(lang==='uz'?'uz-UZ':'ru-RU',{maximumFractionDigits:0}).format(Math.round(Number(n)||0))+(lang==='uz'?' so‘m':' сум');
+const fmt=n=>new Intl.NumberFormat(lang==='uz'?'uz-UZ':'ru-RU',{minimumFractionDigits:0,maximumFractionDigits:2}).format(Math.round((Number(n)||0)*100)/100)+(lang==='uz'?' so‘m':' сум');
+const parseAmount=value=>{
+  const cleaned=String(value??'').trim().replace(/\s/g,'').replace(',', '.');
+  const n=Number(cleaned);
+  return Number.isFinite(n)?n:0;
+};
 const displayDate=value=>{
   if(!value)return '';
   const parts=String(value).split('-');
@@ -585,7 +590,7 @@ function renderPlanGroups(c){
       else if(plan>0){status=tr('statusOk')}
       return `<tr class="${rowClass}">
         <td>${safe(catLabel(ch.key))}${status?`<div class="status-text">${status}${plan>0?` · ${pct.toFixed(0)}%`:''}</div>`:''}</td>
-        <td><input class="planInput" data-cat="${safe(ch.key)}" type="number" min="0" step="1" value="${plan}"></td>
+        <td><input class="planInput" data-cat="${safe(ch.key)}" type="number" min="0" step="0.01" value="${plan}"></td>
         <td class="right">${fmt(actual)}</td>
         <td class="right ${cls}">${left<0?'− ':''}${fmt(Math.abs(left))}</td>
       </tr>`;
@@ -662,8 +667,8 @@ $('compareA').addEventListener('change',renderComparison);
 $('compareB').addEventListener('change',renderComparison);
 $('saveSettings').onclick=()=>{
   const set=settings();
-  set.income=Math.max(0,Number($('income').value)||0);
-  set.reserve=Math.max(0,Number($('reserve').value)||0);
+  set.income=Math.max(0,parseAmount($('income').value)||0);
+  set.reserve=Math.max(0,parseAmount($('reserve').value)||0);
   set.threshold=Math.min(100,Math.max(1,Number($('threshold').value)||DEFAULT_THRESHOLD));
   save();render();toast(`${tr('savedMonth')}: ${monthName(monthValue())}`);
 };
@@ -676,7 +681,7 @@ $('copyPrev').onclick=()=>{
 };
 $('savePlans').onclick=()=>{
   const set=settings();
-  document.querySelectorAll('.planInput').forEach(i=>set.plans[i.dataset.cat]=Math.max(0,Number(i.value)||0));
+  document.querySelectorAll('.planInput').forEach(i=>set.plans[i.dataset.cat]=Math.max(0,parseAmount(i.value)||0));
   save();render();toast(`${tr('planSaved')}: ${monthName(monthValue())}`);
 };
 $('type').addEventListener('change',()=>{$('category').disabled=$('type').value==='income'});
@@ -706,7 +711,7 @@ function startEdit(id){
 }
 $('form').onsubmit=e=>{
   e.preventDefault();
-  const amount=Number($('amount').value);if(!amount||amount<0.01)return toast(tr('needAmount'));
+  const amount=parseAmount($('amount').value);if(!amount||amount<0.01)return toast(tr('needAmount'));
   const date=$('date').value;if(!date)return toast(tr('needDate'));
   const type=$('type').value,category=type==='income'?'Дополнительный доход':$('category').value;
   if(editingId){
