@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Мой бюджет</title>
+<style>
+:root{
+  --bg:#0b1220;--card:#142034;--card2:#0b1422;--line:#293a53;
+  --text:#eef4ff;--muted:#9aabc4;--blue:#8ab8ff;--green:#54d6a8;
+  --red:#ff7c85;--amber:#ffd27a;--shadow:#0005
+}
+body.light{
+  --bg:#f4f7fb;--card:#ffffff;--card2:#f7f9fc;--line:#d9e2ee;
+  --text:#172133;--muted:#63738a;--blue:#2f6fd8;--green:#16845f;
+  --red:#c53b4a;--amber:#9a6b00;--shadow:#7d8ca322
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(135deg,var(--bg),var(--bg));color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+.app{max-width:1120px;margin:auto;padding:20px}
+.top{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{background:linear-gradient(135deg,#8ab8ff,#a29aff);color:#101827;font-weight:900;border-radius:14px;padding:12px 15px;font-size:20px}
+.brand h1{margin:0;font-size:23px}
+.muted{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
+.hero{display:grid;grid-template-columns:1.18fr 1fr;gap:16px}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 14px;font-size:17px}
+.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.balance{font-size:clamp(30px,4vw,44px);font-weight:800;margin:8px 0}
+.balance.negative{color:var(--red)}
+.bar{height:7px;background:#293a53;border-radius:8px;overflow:hidden;margin:12px 0}
+.bar div{height:100%;width:0;background:linear-gradient(90deg,#8ab8ff,#54d6a8)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}
+.stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.stat span{display:block;color:var(--muted);font-size:12px}
+.stat b{display:block;font-size:14px;margin-top:5px;overflow-wrap:anywhere}
+input,select{width:100%;background:var(--card2);color:var(--text);border:1px solid #334761;border-radius:10px;padding:11px;font:inherit;outline:none}
+input:focus,select:focus{border-color:var(--blue)}
+label{font-size:12px;color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.full{grid-column:1/-1}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}
+.primary{background:linear-gradient(135deg,#8ab8ff,#a29aff);color:#101827}
+.secondary{background:#263a56;color:var(--text);border:1px solid #3b506d}
+.danger{background:#4b2933;color:#ffc0c5;padding:6px 9px}
+.note{color:var(--amber);font-size:12px;line-height:1.5;margin-top:12px}
+.pill{background:#263a56;border-radius:20px;padding:4px 8px;font-size:11px}
+.alert-box{display:none;margin-top:12px;padding:11px 12px;border:1px solid #7b6030;background:rgba(255,210,122,.08);border-radius:12px;color:var(--amber);font-size:12px;line-height:1.45}
+.alert-box.over{border-color:#713c45;background:rgba(255,124,133,.08);color:#ffb8be}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.compare-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:14px}
+.compare-card{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.compare-card span{display:block;color:var(--muted);font-size:12px}
+.compare-card b{display:block;margin-top:5px;font-size:16px}
+.change-up{color:var(--red)}.change-down{color:var(--green)}.change-flat{color:var(--muted)}
+.compare-table{width:100%;border-collapse:collapse;min-width:680px}
+.compare-table th,.compare-table td{text-align:left;padding:10px 7px;border-bottom:1px solid var(--line);font-size:13px}
+.compare-table th{color:var(--muted);font-weight:500}.compare-table .right{text-align:right}
+.compare-section{margin-top:16px}
+.trend-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;align-items:end;height:150px;margin-top:14px}
+.trend-col{height:100%;display:flex;flex-direction:column;justify-content:end;gap:6px;min-width:0}
+.trend-bar-wrap{height:110px;display:flex;align-items:end;justify-content:center}
+.trend-bar{width:70%;max-width:48px;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#8ab8ff,#6d89ff);min-height:2px}
+.trend-label{font-size:10px;color:var(--muted);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trend-value{font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.group{border:1px solid var(--line);border-radius:14px;background:var(--card2);margin-bottom:9px;overflow:hidden}
+.group summary{list-style:none;cursor:pointer;padding:12px 13px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+.group summary::-webkit-details-marker{display:none}
+.group summary:before{content:"＋";width:22px;height:22px;border-radius:7px;background:#263a56;display:grid;place-items:center;color:var(--blue);font-weight:800;flex:0 0 22px}
+.group[open] summary:before{content:"−"}
+.group-head{display:flex;align-items:center;gap:9px;min-width:0}
+.group-name{font-weight:700}
+.group-meta{color:var(--muted);font-size:12px;text-align:right}
+.subrows{padding:0 10px 10px}
+.plan-table{width:100%;border-collapse:collapse}
+.plan-table th,.plan-table td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+.plan-table th{color:var(--muted);font-weight:500}
+.plan-table input{padding:8px 9px;text-align:right}
+.right{text-align:right}
+.good{color:var(--green)}
+.bad{color:var(--red)}
+.warn{color:var(--amber)}
+.plan-row-warn{background:rgba(255,210,122,.055)}
+.plan-row-over{background:rgba(255,124,133,.075)}
+.status-text{font-size:11px;margin-top:3px;color:var(--muted)}
+.tx{width:100%;border-collapse:collapse;min-width:620px}
+.tx th,.tx td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);font-size:13px}
+.tx th{color:var(--muted);font-weight:500}
+.tablewrap{overflow:auto}
+.empty{text-align:center;color:var(--muted);padding:20px}
+.footer{color:var(--muted);font-size:12px;margin:14px 2px}
+.toast{display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#e4fff4;color:#10251e;border-radius:12px;padding:12px 16px;box-shadow:0 8px 30px var(--shadow);z-index:20;max-width:calc(100vw - 24px)}
+@media(max-width:760px){
+  .app{padding:12px}.hero,.columns{grid-template-columns:1fr}.card{padding:14px}
+  .top{align-items:stretch;flex-direction:column}.stats{gap:6px}.stat{padding:9px}.stat b{font-size:12px}
+}
+@media(max-width:430px){
+  .formgrid{grid-template-columns:1fr}.full{grid-column:auto}
+  .stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}
+  .group-meta{font-size:11px}.plan-table th,.plan-table td{font-size:12px}
+}
+
+body.light .logo{color:#10203a}
+body.light .bar,body.light .catbar div + div{background:#d8e1ec}
+body.light input,body.light select{background:#f7f9fc;border-color:#c8d4e2}
+body.light .stat,body.light .group,body.light .card .group,body.light .plan-table,
+body.light .cats>div,body.light .compare-card{background:#f7f9fc}
+body.light .secondary{background:#e7edf5;color:#1d2a3e;border-color:#c7d4e5}
+body.light .danger{background:#f8e7e9;color:#a42d39}
+body.light .trend-bar{background:linear-gradient(180deg,#6f9fe5,#7182d6)}
+body.light .pill{background:#e6edf6;color:#34527a}
+
+</style>
+</head>
+<body>
+<main class="app">
+<header class="top">
+  <div class="brand">
+    <div class="logo">₽</div>
+    <div>
+      <h1><span data-i18n="appTitle">Мой бюджет</span></h1>
+      <div class="muted"><span data-i18n="subtitle">Личные финансы · локальное хранение</span></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+    <div style="min-width:145px">
+      <label for="lang">Язык / Til</label>
+      <select id="lang"><option value="ru">Русский</option><option value="uz">O‘zbekcha</option></select>
+    </div>
+    <div style="min-width:145px">
+      <label for="theme" data-i18n="themeLabel">Тема</label>
+      <select id="theme">
+        <option value="dark" data-i18n="darkTheme">Тёмная</option>
+        <option value="light" data-i18n="lightTheme">Светлая</option>
+      </select>
+    </div>
+    <div style="min-width:210px">
+      <label for="month" data-i18n="selectedMonth">Выбранный месяц</label>
+      <input id="month" type="month">
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="card">
+    <div class="label" data-i18n="balanceLabel">Остаток за выбранный месяц</div>
+    <div class="balance" id="balance">0 сум</div>
+    <div class="bar"><div id="progress"></div></div>
+    <div class="muted" id="progressText">Потрачено 0% от дохода</div>
+    <div class="stats">
+      <div class="stat"><span data-i18n="incomeLabel">Доход</span><b id="incomeStat">0</b></div>
+      <div class="stat"><span data-i18n="spentLabel">Потрачено</span><b id="spentStat">0</b></div>
+      <div class="stat"><span data-i18n="planLabel">План расходов</span><b id="planStat">0</b></div>
+    </div>
+    <div id="budgetAlert" class="alert-box"></div>
+  </div>
+
+  <div class="card">
+    <h2 class="title"><span data-i18n="monthBudgetTitle">Бюджет выбранного месяца</span><span class="pill" id="monthLabel"></span></h2>
+    <div class="formgrid">
+      <div class="field">
+        <label for="income" data-i18n="incomeInput">Доход / зарплата этого месяца (сум)</label>
+        <input id="income" type="number" min="0" step="1">
+      </div>
+      <div class="field">
+        <label for="reserve" data-i18n="reserveInput">Резерв на непредвиденное (сум)</label>
+        <input id="reserve" type="number" min="0" step="1">
+      </div>
+      <div class="field full">
+        <label for="threshold" data-i18n="thresholdLabel">Предупреждать при, %</label>
+        <input id="threshold" type="number" min="1" max="100" step="1">
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="saveSettings" data-i18n="saveMonth">Сохранить месяц</button>
+      <button class="secondary" id="copyPrev" data-i18n="copyPrev">Взять план прошлого месяца</button>
+      <button class="secondary" id="export" data-i18n="export">Экспорт</button>
+      <button class="secondary" id="import" data-i18n="import">Импорт</button>
+      <input id="file" type="file" accept="application/json" hidden>
+    </div>
+    <div class="note" data-i18n="monthNote">Доход хранится отдельно для каждого месяца. План коммунальных и другие группы также можно менять отдельно по месяцам.</div>
+  </div>
+</section>
+
+<section class="card">
+  <h2 class="title"><span data-i18n="planTitlePrefix">План расходов на</span> <span id="planMonthTitle"></span></h2>
+  <div id="planGroups"></div>
+  <div class="empty" id="planEmpty" hidden></div>
+  <div class="actions">
+    <button class="primary" id="savePlans" data-i18n="savePlans">Сохранить план категорий</button>
+  </div>
+</section>
+
+<section class="columns">
+  <div class="card">
+    <h2 class="title" data-i18n="addOperation">Добавить операцию</h2>
+    <form id="form">
+      <div class="formgrid">
+        <div class="field">
+          <label for="type" data-i18n="typeLabel">Тип</label>
+          <select id="type">
+            <option value="expense" data-i18n="expenseOption">Расход</option>
+            <option value="income" data-i18n="extraIncomeOption">Дополнительный доход</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="date" data-i18n="dateLabel">Дата покупки</label>
+          <input id="date" type="date" required><div class="muted" style="font-size:11px" data-i18n="dateNote">Эта дата сохраняется вместе с покупкой.</div>
+        </div>
+        <div class="field">
+          <label for="amount" data-i18n="amountLabel">Сумма (сум)</label>
+          <input id="amount" type="number" min="0.01" step="1" placeholder="234000" required>
+        </div>
+        <div class="field">
+          <label for="category" data-i18n="categoryLabel">Категория</label>
+          <select id="category"></select>
+        </div>
+        <div class="field full">
+          <label for="place" data-i18n="placeLabel">Магазин / место</label>
+          <input id="place" placeholder="Например, Korzinka">
+        </div>
+        <div class="field full">
+          <label for="noteField" data-i18n="commentLabel">Комментарий</label>
+          <input id="noteField" placeholder="Что купил или за что заплатил">
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" type="submit" data-i18n="addRecord">＋ Добавить запись</button>
+        <button class="secondary" type="reset" data-i18n="clear">Очистить</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 class="title" data-i18n="byCategories">Расходы по категориям</h2>
+    <div id="cats"></div>
+    <div class="empty" id="noCats"></div>
+  </div>
+</section>
+
+
+<section class="card compare-section">
+  <h2 class="title"><span data-i18n="compareTitle">Сравнение месяцев</span><span class="pill" data-i18n="storedLocally">Данные сохранены</span></h2>
+  <div class="compare-grid">
+    <div class="field"><label for="compareA" data-i18n="monthA">Месяц 1</label><input id="compareA" type="month"></div>
+    <div class="field"><label for="compareB" data-i18n="monthB">Месяц 2</label><input id="compareB" type="month"></div>
+  </div>
+  <div class="compare-cards">
+    <div class="compare-card"><span data-i18n="compareSpent">Расходы</span><b id="cmpTotal">0</b></div>
+    <div class="compare-card"><span data-i18n="compareIncome">Доход</span><b id="cmpIncome">0</b></div>
+    <div class="compare-card"><span data-i18n="compareChange">Разница расходов</span><b id="cmpChange">0</b></div>
+  </div>
+  <div class="tablewrap">
+    <table class="compare-table">
+      <thead><tr>
+        <th data-i18n="compareCategory">Категория</th>
+        <th class="right" id="cmpHeadA">Месяц 1</th>
+        <th class="right" id="cmpHeadB">Месяц 2</th>
+        <th class="right" data-i18n="difference">Разница</th>
+        <th class="right" data-i18n="changePercent">Изменение</th>
+      </tr></thead>
+      <tbody id="compareRows"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="compareEmpty" hidden></div>
+  <h3 class="title" style="margin-top:18px"><span data-i18n="trendTitle">Динамика расходов</span><span class="pill" data-i18n="lastSix">Последние 6 месяцев</span></h3>
+  <div id="trend" class="trend-grid"></div>
+</section>
+
+<section class="card">
+  <h2 class="title"><span data-i18n="history">История операций</span> <span class="pill" id="count">0</span></h2>
+  <div class="tablewrap">
+    <table class="tx">
+      <thead><tr>
+        <th data-i18n="dateHead">Дата</th>
+        <th data-i18n="categoryHead2">Категория</th>
+        <th data-i18n="detailsHead">Детали</th>
+        <th class="right" data-i18n="sumHead">Сумма</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="empty"></div>
+</section>
+
+<div class="footer" data-i18n="footer">Локальная версия · данные сохраняются в браузере этого устройства. Телефон и компьютер не синхронизируются автоматически.</div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const DEFAULT_THRESHOLD=80;
+const key='myBudgetAppV2';
+const langKey='myBudgetLangV2';
+const themeKey='myBudgetThemeV1';
+const d=new Date();
+const dateStr=x=>`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+const monthName=m=>new Date(m+'-01T00:00:00').toLocaleDateString(lang==='uz'?'uz-UZ':'ru-RU',{month:'long',year:'numeric'});
+const fmt=n=>new Intl.NumberFormat(lang==='uz'?'uz-UZ':'ru-RU',{maximumFractionDigits:0}).format(Math.round(Number(n)||0))+(lang==='uz'?' so‘m':' сум');
+const displayDate=value=>{
+  if(!value)return '';
+  const parts=String(value).split('-');
+  if(parts.length!==3)return value;
+  return lang==='uz'?`${parts[2]}.${parts[1]}.${parts[0]}`:`${parts[2]}.${parts[1]}.${parts[0]}`;
+};
+
+
+const groups=[
+  {key:'products',label:'Продукты',children:[{key:'Продукты',label:'Продукты'}]},
+  {key:'utilities',label:'Коммунальные',children:[
+    {key:'Электричество',label:'Электричество'},
+    {key:'Вода',label:'Вода'},
+    {key:'Газ',label:'Газ'},
+    {key:'Коммунальные — другое',label:'Другое'}
+  ]},
+  {key:'internet',label:'Интернет и связь',children:[{key:'Интернет и связь',label:'Интернет и связь'}]},
+  {key:'children',label:'Дети и образование',children:[
+    {key:'Курсы',label:'Курсы'},
+    {key:'Репетитор',label:'Репетитор'},
+    {key:'Деньги в школу',label:'Деньги в школу'},
+    {key:'Карманные расходы детей',label:'Карманные расходы'},
+    {key:'Дети и образование — другое',label:'Другое'}
+  ]},
+  {key:'finance',label:'Финансовые обязательства',children:[
+    {key:'Рассрочка',label:'Рассрочка'},
+    {key:'Кредит',label:'Кредит'}
+  ]},
+  {key:'transport',label:'Транспорт и бензин',children:[{key:'Транспорт и бензин',label:'Транспорт и бензин'}]},
+  {key:'foodOutside',label:'Кафе и рестораны',children:[
+    {key:'Ресторан',label:'Ресторан'},
+    {key:'Кафе',label:'Кафе'},
+    {key:'Кофейня',label:'Кофейня'}
+  ]},
+  {key:'personal',label:'Личные расходы',children:[{key:'Личные расходы',label:'Личные расходы'}]},
+  {key:'health',label:'Здоровье и спорт',children:[{key:'Здоровье и спорт',label:'Здоровье и спорт'}]},
+  {key:'home',label:'Дом и покупки',children:[{key:'Дом и покупки',label:'Дом и покупки'}]},
+  {key:'unexpected',label:'Непредвиденные расходы',children:[{key:'Непредвиденные расходы',label:'Непредвиденные расходы'}]},
+  {key:'other',label:'Другое',children:[{key:'Другое',label:'Другое'}]}
+];
+const leaves=groups.flatMap(g=>g.children.map(c=>c.key));
+const defaultPlans={
+  'Продукты':4500000,'Электричество':0,'Вода':0,'Газ':0,'Коммунальные — другое':0,
+  'Интернет и связь':495000,'Курсы':0,'Репетитор':0,'Деньги в школу':0,'Карманные расходы детей':0,'Дети и образование — другое':2550000,
+  'Рассрочка':550000,'Кредит':0,'Транспорт и бензин':1000000,'Ресторан':0,'Кафе':0,'Кофейня':0,
+  'Личные расходы':3600000,'Здоровье и спорт':250000,'Дом и покупки':0,'Непредвиденные расходы':500000,'Другое':0
+};
+const catUz={
+  'Продукты':'Oziq-ovqat','Электричество':'Elektr energiyasi','Вода':'Suv','Газ':'Gaz','Коммунальные — другое':'Boshqa kommunal',
+  'Интернет и связь':'Internet va aloqa','Курсы':'Kurslar','Репетитор':'Repetitor','Деньги в школу':'Maktab uchun pul',
+  'Карманные расходы детей':'Bolalarga cho‘ntak puli','Дети и образование — другое':'Boshqa bolalar va ta’lim xarajatlari',
+  'Рассрочка':'Bo‘lib-bo‘lib to‘lov','Кредит':'Kredit','Транспорт и бензин':'Transport va benzin',
+  'Ресторан':'Restoran','Кафе':'Kafe','Кофейня':'Qahvaxona','Личные расходы':'Shaxsiy xarajatlar',
+  'Здоровье и спорт':'Sog‘liq va sport','Дом и покупки':'Uy va xaridlar','Непредвиденные расходы':'Kutilmagan xarajatlar','Другое':'Boshqa'
+};
+const groupUz={
+  products:'Oziq-ovqat',utilities:'Kommunal xizmatlar',internet:'Internet va aloqa',children:'Bolalar va ta’lim',
+  finance:'Moliyaviy majburiyatlar',transport:'Transport va benzin',foodOutside:'Kafe va restoranlar',
+  personal:'Shaxsiy xarajatlar',health:'Sog‘liq va sport',home:'Uy va xaridlar',unexpected:'Kutilmagan xarajatlar',other:'Boshqa'
+};
+
+const I18N={
+ru:{
+ themeLabel:'Тема',darkTheme:'Тёмная',lightTheme:'Светлая',
+ appTitle:'Мой бюджет',subtitle:'Личные финансы · локальное хранение',selectedMonth:'Выбранный месяц',
+ balanceLabel:'Остаток за выбранный месяц',incomeLabel:'Доход',spentLabel:'Потрачено',planLabel:'План расходов',
+ monthBudgetTitle:'Бюджет выбранного месяца',incomeInput:'Доход / зарплата этого месяца (сум)',reserveInput:'Резерв на непредвиденное (сум)',
+ thresholdLabel:'Предупреждать при, %',saveMonth:'Сохранить месяц',copyPrev:'Взять план прошлого месяца',export:'Экспорт',import:'Импорт',
+ monthNote:'Доход и план расходов хранятся отдельно для каждого месяца. Группы можно раскрывать, чтобы видеть подкатегории.',
+ planTitlePrefix:'План расходов на',plannedHead:'План, сум',spentHead:'Потрачено',remainingHead:'Остаток',total:'ИТОГО',savePlans:'Сохранить план категорий',
+ addOperation:'Добавить операцию',typeLabel:'Тип',expenseOption:'Расход',extraIncomeOption:'Дополнительный доход',
+ dateLabel:'Дата покупки',dateNote:'Эта дата сохраняется вместе с покупкой.',amountLabel:'Сумма (сум)',categoryLabel:'Категория',placeLabel:'Магазин / место',commentLabel:'Комментарий',
+ addRecord:'＋ Добавить запись',clear:'Очистить',byCategories:'Расходы по категориям',history:'История операций',
+ dateHead:'Дата',categoryHead2:'Категория',detailsHead:'Детали',sumHead:'Сумма',
+ noCats:'В этом месяце пока нет расходов.',empty:'Добавь первую запись за выбранный месяц.',
+ footer:'Локальная версия · данные сохраняются в браузере этого устройства. Телефон и компьютер не синхронизируются автоматически.',
+ monthSpent:p=>`Потрачено ${p.toFixed(1).replace('.',',')}% от дохода`,
+ noPlan:'План прошлого месяца отсутствует',planCopied:'План перенесён из',savedMonth:'Настройки сохранены',planSaved:'План категорий сохранён',
+ added:'Запись добавлена',deleted:'Запись удалена',backup:'Резервная копия создана',imported:'Данные импортированы',importFail:'Не удалось прочитать резервную копию',
+ deleteConfirm:'Удалить эту запись?',importConfirm:'Импорт заменит текущие данные на этом устройстве. Продолжить?',
+ needAmount:'Укажи сумму больше нуля',needDate:'Укажи дату',extraIncome:'Дополнительный доход',
+ entries:n=>`${n} ${n===1?'запись':'записей'}`,nearing:'Приближается к лимиту',exceeded:'Лимит превышен',
+ budgetWarning:'Внимание: расходы приближаются к допустимому уровню.',budgetExceeded:'Внимание: расходы превысили допустимый уровень.',
+ categoryWarning:c=>`Категория «${c}» приближается к лимиту.`,categoryExceeded:c=>`Категория «${c}» превысила план.`,
+ statusOk:'В пределах плана',groupTotal:'Итого',allGroups:'Группа',subcategory:'Подкатегория',
+ compareTitle:'Сравнение месяцев',storedLocally:'Данные сохранены',monthA:'Месяц 1',monthB:'Месяц 2',
+ compareSpent:'Расходы',compareIncome:'Доход',compareChange:'Разница расходов',compareCategory:'Категория',
+ difference:'Разница',changePercent:'Изменение',trendTitle:'Динамика расходов',lastSix:'Последние 6 месяцев',
+ noComparison:'За выбранные месяцы пока нет расходов для сравнения.',increase:'рост',decrease:'снижение',same:'без изменений'
+},
+uz:{
+ themeLabel:'Mavzu',darkTheme:'Qorong‘i',lightTheme:'Yorug‘',
+ appTitle:'Mening byudjetim',subtitle:'Shaxsiy moliya · lokal saqlash',selectedMonth:'Tanlangan oy',
+ balanceLabel:'Tanlangan oy qoldig‘i',incomeLabel:'Daromad',spentLabel:'Sarflandi',planLabel:'Xarajat rejasi',
+ monthBudgetTitle:'Tanlangan oy byudjeti',incomeInput:'Bu oyning daromadi / maoshi (so‘m)',reserveInput:'Kutilmagan xarajatlar zaxirasi (so‘m)',
+ thresholdLabel:'Ogohlantirish, %',saveMonth:'Oyni saqlash',copyPrev:'O‘tgan oy rejasini olish',export:'Eksport',import:'Import',
+ monthNote:'Daromad va xarajat rejasi har bir oy uchun alohida saqlanadi. Kategoriyalar guruhlarini ochib, ichki bo‘limlarni ko‘rish mumkin.',
+ planTitlePrefix:'Xarajatlar rejasi —',plannedHead:'Reja, so‘m',spentHead:'Sarflandi',remainingHead:'Qoldiq',total:'JAMI',savePlans:'Kategoriya rejasini saqlash',
+ addOperation:'Operatsiya qo‘shish',typeLabel:'Turi',expenseOption:'Xarajat',extraIncomeOption:'Qo‘shimcha daromad',
+ dateLabel:'Xarid sanasi',dateNote:'Bu sana xarid bilan birga saqlanadi.',amountLabel:'Summa (so‘m)',categoryLabel:'Kategoriya',placeLabel:'Do‘kon / joy',commentLabel:'Izoh',
+ addRecord:'＋ Yozuv qo‘shish',clear:'Tozalash',byCategories:'Kategoriyalar bo‘yicha xarajatlar',history:'Operatsiyalar tarixi',
+ dateHead:'Sana',categoryHead2:'Kategoriya',detailsHead:'Tafsilotlar',sumHead:'Summa',
+ noCats:'Bu oyda hali xarajatlar yo‘q.',empty:'Tanlangan oy uchun birinchi yozuvni qo‘shing.',
+ footer:'Lokal versiya · ma’lumotlar ushbu qurilmaning brauzerida saqlanadi. Telefon va kompyuter avtomatik sinxronlanmaydi.',
+ monthSpent:p=>`Daromadning ${p.toFixed(1).replace('.',',')}% sarflandi`,
+ noPlan:'O‘tgan oy uchun reja saqlanmagan',planCopied:'Reja ko‘chirildi:',savedMonth:'Sozlamalar saqlandi',planSaved:'Kategoriya rejasi saqlandi',
+ added:'Yozuv qo‘shildi',deleted:'Yozuv o‘chirildi',backup:'Zaxira nusxa yaratildi',imported:'Ma’lumotlar import qilindi',importFail:'Zaxira nusxasini o‘qib bo‘lmadi',
+ deleteConfirm:'Bu yozuv o‘chirilsinmi?',importConfirm:'Import ushbu qurilmadagi ma’lumotlarni almashtiradi. Davom etilsinmi?',
+ needAmount:'Noldan katta summani kiriting',needDate:'Sanani kiriting',extraIncome:'Qo‘shimcha daromad',
+ entries:n=>`${n} ta yozuv`,nearing:'Limitga yaqin',exceeded:'Limit oshdi',
+ budgetWarning:'Diqqat: xarajatlar ruxsat etilgan darajaga yaqinlashdi.',budgetExceeded:'Diqqat: xarajatlar ruxsat etilgan darajadan oshdi.',
+ categoryWarning:c=>`«${c}» kategoriyasi limitga yaqinlashdi.`,categoryExceeded:c=>`«${c}» kategoriyasi rejadan oshdi.`,
+ statusOk:'Reja doirasida',groupTotal:'Jami',allGroups:'Guruh',subcategory:'Ichki bo‘lim',
+ compareTitle:'Oylarni taqqoslash',storedLocally:'Ma’lumotlar saqlangan',monthA:'1-oy',monthB:'2-oy',
+ compareSpent:'Xarajatlar',compareIncome:'Daromad',compareChange:'Xarajatlar farqi',compareCategory:'Kategoriya',
+ difference:'Farq',changePercent:'O‘zgarish',trendTitle:'Xarajatlar dinamikasi',lastSix:'So‘nggi 6 oy',
+ noComparison:'Tanlangan oylar bo‘yicha taqqoslash uchun xarajatlar hozircha yo‘q.',increase:'o‘sish',decrease:'kamayish',same:'o‘zgarishsiz'
+}
+};
+let lang=localStorage.getItem(langKey)||'ru';
+let state={months:{},transactions:[]};
+
+const tr=k=>(I18N[lang][k]??I18N.ru[k]??k);
+const catLabel=k=>lang==='uz'?(catUz[k]||k):k;
+const groupLabel=g=>lang==='uz'?(groupUz[g.key]||g.label):g.label;
+
+function clonePlans(src){
+  const out={...defaultPlans};
+  const s=src||{};
+  leaves.forEach(k=>{if(s[k]!==undefined)out[k]=Number(s[k])||0;});
+  // Migrate old broad categories without inventing a split.
+  if(s['Коммунальные услуги']!==undefined && out['Коммунальные — другое']===0)out['Коммунальные — другое']=Number(s['Коммунальные услуги'])||0;
+  if(s['Дети и образование']!==undefined && out['Дети и образование — другое']===2550000)out['Дети и образование — другое']=Number(s['Дети и образование'])||0;
+  return out;
+}
+function monthValue(){return $('month').value}
+function ensureMonth(m,source){
+  if(!state.months[m]){
+    if(source)state.months[m]={income:Number(source.income||0),reserve:Number(source.reserve||0),threshold:Number(source.threshold??DEFAULT_THRESHOLD),plans:clonePlans(source.plans)};
+    else state.months[m]={income:18040000,reserve:500000,threshold:DEFAULT_THRESHOLD,plans:clonePlans()};
+  }else{
+    state.months[m].plans=clonePlans(state.months[m].plans);
+    if(state.months[m].threshold===undefined)state.months[m].threshold=DEFAULT_THRESHOLD;
+  }
+}
+function save(){localStorage.setItem(key,JSON.stringify(state))}
+function load(){
+  try{
+    const old=JSON.parse(localStorage.getItem('myBudgetAppV2')||localStorage.getItem('myBudgetAppV1')||'null');
+    if(!old)return;
+    if(old.months&&typeof old.months==='object'){
+      state={months:old.months,transactions:Array.isArray(old.transactions)?old.transactions:[]};
+    }else{
+      state={months:{},transactions:Array.isArray(old.transactions)?old.transactions:[]};
+      const m=monthValue();
+      state.months[m]={income:Number(old.income??18040000),reserve:Number(old.reserve??500000),threshold:Number(old.threshold??DEFAULT_THRESHOLD),plans:clonePlans(old.plans)};
+      save();
+    }
+  }catch(e){state={months:{},transactions:[]}}
+}
+function applyTheme(){
+  const theme=localStorage.getItem(themeKey)||'dark';
+  document.body.classList.toggle('light',theme==='light');
+  const el=$('theme'); if(el) el.value=theme;
+}
+function setTheme(theme){
+  localStorage.setItem(themeKey,theme);
+  applyTheme();
+}
+function safe(t){return String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.display='none',2400)}
+function settings(){ensureMonth(monthValue());return state.months[monthValue()]}
+function monthTx(){return state.transactions.filter(t=>String(t.date).slice(0,7)===monthValue())}
+function calc(){
+  const set=settings(),tx=monthTx();
+  const expenses=tx.filter(t=>t.type==='expense').reduce((a,t)=>a+Number(t.amount),0);
+  const extra=tx.filter(t=>t.type==='income').reduce((a,t)=>a+Number(t.amount),0);
+  const income=Number(set.income||0)+extra;
+  const plannedLeaves=leaves.reduce((a,k)=>a+Number(set.plans[k]||0),0);
+  const planTotal=plannedLeaves+Number(set.reserve||0);
+  const by={};tx.filter(t=>t.type==='expense').forEach(t=>by[t.category]=(by[t.category]||0)+Number(t.amount));
+  return {set,tx,expenses,extra,income,plannedLeaves,planTotal,by,balance:income-expenses};
+}
+function warningInfo(c){
+  const threshold=Math.min(100,Math.max(1,Number(c.set.threshold)||DEFAULT_THRESHOLD));
+  const warnings=[];
+  leaves.forEach(k=>{
+    const plan=Number(c.set.plans[k]||0),actual=Number(c.by[k]||0);
+    if(plan>0){
+      const pct=actual/plan*100;
+      if(pct>=100)warnings.push({type:'over',category:k,pct});
+      else if(pct>=threshold)warnings.push({type:'warn',category:k,pct});
+    }
+  });
+  return {threshold,warnings,overallPct:c.income>0?c.expenses/c.income*100:0};
+}
+
+function populateCategorySelect(){
+  $('category').innerHTML=groups.map(g=>{
+    if(g.children.length===1)return `<option value="${safe(g.children[0].key)}">${safe(catLabel(g.children[0].key))}</option>`;
+    return `<optgroup label="${safe(groupLabel(g))}">`+
+      g.children.map(c=>`<option value="${safe(c.key)}">${safe(catLabel(c.key))}</option>`).join('')+
+      `</optgroup>`;
+  }).join('');
+}
+
+function monthExpenseMap(m){
+  const map={};
+  state.transactions.filter(t=>String(t.date).slice(0,7)===m && t.type==='expense')
+    .forEach(t=>map[t.category]=(map[t.category]||0)+Number(t.amount));
+  return map;
+}
+function monthIncome(m){
+  const set=state.months[m]?.income??0;
+  const extra=state.transactions.filter(t=>String(t.date).slice(0,7)===m && t.type==='income')
+    .reduce((a,t)=>a+Number(t.amount),0);
+  return Number(set||0)+extra;
+}
+function allComparableCategories(){
+  return groups.flatMap(g=>g.children.map(c=>c.key));
+}
+function previousMonths(base,count){
+  const out=[],x=new Date(base+'-01T12:00:00');
+  for(let i=0;i<count;i++){
+    const y=x.getFullYear(),m=String(x.getMonth()+1).padStart(2,'0');
+    out.unshift(`${y}-${m}`);
+    x.setMonth(x.getMonth()-1);
+  }
+  return out;
+}
+function renderComparison(){
+  const a=$('compareA').value,b=$('compareB').value;
+  if(!a||!b)return;
+  const mapA=monthExpenseMap(a),mapB=monthExpenseMap(b);
+  const incomeA=monthIncome(a),incomeB=monthIncome(b);
+  const totalA=Object.values(mapA).reduce((s,n)=>s+n,0),totalB=Object.values(mapB).reduce((s,n)=>s+n,0);
+  const diff=totalB-totalA;
+  $('cmpHeadA').textContent=monthName(a);
+  $('cmpHeadB').textContent=monthName(b);
+  $('cmpTotal').textContent=`${fmt(totalA)} → ${fmt(totalB)}`;
+  $('cmpIncome').textContent=`${fmt(incomeA)} → ${fmt(incomeB)}`;
+  const pct=totalA>0?(diff/totalA*100):null;
+  $('cmpChange').textContent=(diff>0?'+ ':'')+(diff<0?'− ':'')+fmt(Math.abs(diff))+(pct===null?'':` (${pct.toFixed(1).replace('.',',')}%)`);
+  $('cmpChange').className=diff>0?'change-up':diff<0?'change-down':'change-flat';
+
+  const keys=allComparableCategories().filter(k=>(mapA[k]||0)>0||(mapB[k]||0)>0);
+  $('compareRows').innerHTML=keys.sort((x,y)=>Math.max(mapB[y]||0,mapA[y]||0)-Math.max(mapB[x]||0,mapA[x]||0)).map(k=>{
+    const va=Number(mapA[k]||0),vb=Number(mapB[k]||0),d=vb-va,pc=va>0?d/va*100:null;
+    const cls=d>0?'change-up':d<0?'change-down':'change-flat';
+    return `<tr><td>${safe(catLabel(k))}</td><td class="right">${fmt(va)}</td><td class="right">${fmt(vb)}</td><td class="right ${cls}">${d>0?'+ ':d<0?'− ':''}${fmt(Math.abs(d))}</td><td class="right ${cls}">${pc===null?'—':(d>0?'+':d<0?'':'')+pc.toFixed(1).replace('.',',')+'%'}</td></tr>`;
+  }).join('');
+  $('compareEmpty').textContent=tr('noComparison');
+  $('compareEmpty').hidden=keys.length>0;
+
+  const trendMonths=previousMonths(b,6);
+  const trendVals=trendMonths.map(m=>({m,value:Object.values(monthExpenseMap(m)).reduce((s,n)=>s+n,0)}));
+  const max=Math.max(1,...trendVals.map(x=>x.value));
+  $('trend').innerHTML=trendVals.map(x=>`
+    <div class="trend-col">
+      <div class="trend-value">${x.value?fmt(x.value):'—'}</div>
+      <div class="trend-bar-wrap"><div class="trend-bar" style="height:${Math.max(2,x.value/max*100)}%"></div></div>
+      <div class="trend-label">${monthName(x.m).replace(' г.','')}</div>
+    </div>`).join('');
+}
+function renderPlanGroups(c){
+  $('planGroups').innerHTML=groups.map(g=>{
+    const gPlan=g.children.reduce((a,ch)=>a+Number(c.set.plans[ch.key]||0),0);
+    const gActual=g.children.reduce((a,ch)=>a+Number(c.by[ch.key]||0),0);
+    const gLeft=gPlan-gActual;
+    const gPct=gPlan>0?gActual/gPlan*100:0;
+    let groupClass=gLeft<0?'bad':gPct>=Number(c.set.threshold||DEFAULT_THRESHOLD)?'warn':'good';
+    const children=g.children.map(ch=>{
+      const plan=Number(c.set.plans[ch.key]||0),actual=Number(c.by[ch.key]||0),left=plan-actual,pct=plan>0?actual/plan*100:0;
+      let rowClass='',cls=left<0?'bad':'good',status='';
+      if(plan>0&&pct>=100){rowClass='plan-row-over';status=tr('exceeded');cls='bad'}
+      else if(plan>0&&pct>=Number(c.set.threshold||DEFAULT_THRESHOLD)){rowClass='plan-row-warn';status=tr('nearing');cls='warn'}
+      else if(plan>0){status=tr('statusOk')}
+      return `<tr class="${rowClass}">
+        <td>${safe(catLabel(ch.key))}${status?`<div class="status-text">${status}${plan>0?` · ${pct.toFixed(0)}%`:''}</div>`:''}</td>
+        <td><input class="planInput" data-cat="${safe(ch.key)}" type="number" min="0" step="1" value="${plan}"></td>
+        <td class="right">${fmt(actual)}</td>
+        <td class="right ${cls}">${left<0?'− ':''}${fmt(Math.abs(left))}</td>
+      </tr>`;
+    }).join('');
+    if(g.children.length===1){
+      return `<details class="group" open>
+        <summary><div class="group-head"><span class="group-name">${safe(groupLabel(g))}</span></div><div class="group-meta">${fmt(gActual)} / ${fmt(gPlan||0)}</div></summary>
+        <div class="subrows"><table class="plan-table"><thead><tr><th>${tr('subcategory')}</th><th class="right">${tr('plannedHead')}</th><th class="right">${tr('spentHead')}</th><th class="right">${tr('remainingHead')}</th></tr></thead><tbody>${children}</tbody></table></div>
+      </details>`;
+    }
+    return `<details class="group">
+      <summary><div class="group-head"><span class="group-name">${safe(groupLabel(g))}</span></div><div class="group-meta ${groupClass}">${fmt(gActual)} / ${fmt(gPlan)}</div></summary>
+      <div class="subrows"><table class="plan-table"><thead><tr><th>${tr('subcategory')}</th><th class="right">${tr('plannedHead')}</th><th class="right">${tr('spentHead')}</th><th class="right">${tr('remainingHead')}</th></tr></thead><tbody>${children}</tbody></table></div>
+    </details>`;
+  }).join('');
+}
+function render(){
+  const m=monthValue(),c=calc(),wi=warningInfo(c);
+  $('monthLabel').textContent=monthName(m);$('planMonthTitle').textContent=monthName(m);
+  $('income').value=c.set.income;$('reserve').value=c.set.reserve;$('threshold').value=wi.threshold;
+  $('balance').textContent=fmt(c.balance);$('balance').classList.toggle('negative',c.balance<0);
+  $('incomeStat').textContent=fmt(c.income);$('spentStat').textContent=fmt(c.expenses);$('planStat').textContent=fmt(c.planTotal);
+  const p=c.income>0?Math.min(100,c.expenses/c.income*100):0;
+  $('progress').style.width=p+'%';$('progress').style.background=p>=100?'var(--red)':'linear-gradient(90deg,#8ab8ff,#54d6a8)';
+  $('progressText').textContent=tr('monthSpent')(p);
+
+  const budgetAlert=$('budgetAlert');
+  if(wi.overallPct>=100){budgetAlert.textContent=tr('budgetExceeded');budgetAlert.className='alert-box over';budgetAlert.style.display='block'}
+  else if(wi.overallPct>=wi.threshold){budgetAlert.textContent=tr('budgetWarning');budgetAlert.className='alert-box';budgetAlert.style.display='block'}
+  else budgetAlert.style.display='none';
+
+  renderPlanGroups(c);
+
+  const entries=Object.entries(c.by).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]);
+  const total=entries.reduce((a,[,n])=>a+n,0);
+  $('cats').innerHTML=entries.map(([k,n])=>{
+    const pct=total?n/total*100:0;
+    return `<div style="padding:11px;background:var(--card2);border:1px solid var(--line);border-radius:12px;margin-bottom:9px">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span>${safe(catLabel(k))}</span><b>${fmt(n)}</b></div>
+      <div style="height:5px;background:#293a53;border-radius:8px;margin-top:8px;overflow:hidden"><div style="height:100%;background:var(--blue);width:${pct}%"></div></div>
+      <div class="muted" style="margin-top:6px">${pct.toFixed(1).replace('.',',')}%</div>
+    </div>`;
+  }).join('');
+  $('noCats').textContent=tr('noCats');$('noCats').hidden=entries.length>0;
+
+  const sorted=[...c.tx].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+  $('rows').innerHTML=sorted.map(t=>`<tr>
+    <td>${safe(displayDate(t.date))}</td><td><span class="pill">${safe(catLabel(t.category))}</span></td>
+    <td>${safe([t.place,t.note].filter(Boolean).join(' · ')||(t.type==='income'?tr('extraIncome'):''))}</td>
+    <td class="right" style="color:${t.type==='income'?'var(--green)':'var(--text)'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</td>
+    <td><button class="danger" data-del="${safe(t.id)}">Удалить</button></td>
+  </tr>`).join('');
+  $('empty').textContent=tr('empty');$('empty').hidden=sorted.length>0;$('count').textContent=tr('entries')(sorted.length);
+  renderComparison();
+}
+function applyLang(){
+  $('lang').value=lang;document.documentElement.lang=lang==='uz'?'uz':'ru';applyTheme();
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=tr(el.dataset.i18n)});
+  $('place').placeholder=lang==='uz'?'Masalan, Korzinka':'Например, Korzinka';
+  $('noteField').placeholder=lang==='uz'?'Nima sotib oldingiz yoki nima uchun to‘ladingiz':'Что купил или за что заплатил';
+  populateCategorySelect();render();renderComparison();
+}
+
+$('month').value=dateStr(d).slice(0,7);
+$('compareB').value=dateStr(d).slice(0,7);
+const comparePrev=new Date(d);comparePrev.setMonth(comparePrev.getMonth()-1);$('compareA').value=dateStr(comparePrev).slice(0,7);
+$('date').value=dateStr(d);
+load();ensureMonth(monthValue());applyTheme();applyLang();
+
+$('lang').addEventListener('change',()=>{lang=$('lang').value;localStorage.setItem(langKey,lang);applyLang()});
+$('theme').addEventListener('change',()=>{setTheme($('theme').value)});
+$('month').addEventListener('change',()=>{ensureMonth(monthValue());$('date').value=monthValue()===dateStr(new Date()).slice(0,7)?dateStr(new Date()):monthValue()+'-01';render();if(!$('compareB').value)$('compareB').value=monthValue();renderComparison()});
+$('compareA').addEventListener('change',renderComparison);
+$('compareB').addEventListener('change',renderComparison);
+$('saveSettings').onclick=()=>{
+  const set=settings();
+  set.income=Math.max(0,Number($('income').value)||0);
+  set.reserve=Math.max(0,Number($('reserve').value)||0);
+  set.threshold=Math.min(100,Math.max(1,Number($('threshold').value)||DEFAULT_THRESHOLD));
+  save();render();toast(`${tr('savedMonth')}: ${monthName(monthValue())}`);
+};
+$('copyPrev').onclick=()=>{
+  const m=monthValue(),prev=new Date(m+'-01T12:00:00');prev.setMonth(prev.getMonth()-1);
+  const pm=`${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}`;
+  if(!state.months[pm])return toast(tr('noPlan'));
+  state.months[m]={income:state.months[pm].income,reserve:state.months[pm].reserve,threshold:Number(state.months[pm].threshold??DEFAULT_THRESHOLD),plans:clonePlans(state.months[pm].plans)};
+  save();render();toast(`${tr('planCopied')} ${monthName(pm)}`);
+};
+$('savePlans').onclick=()=>{
+  const set=settings();
+  document.querySelectorAll('.planInput').forEach(i=>set.plans[i.dataset.cat]=Math.max(0,Number(i.value)||0));
+  save();render();toast(`${tr('planSaved')}: ${monthName(monthValue())}`);
+};
+$('type').addEventListener('change',()=>{$('category').disabled=$('type').value==='income'});
+$('form').onsubmit=e=>{
+  e.preventDefault();
+  const amount=Number($('amount').value);if(!amount||amount<0.01)return toast(tr('needAmount'));
+  const date=$('date').value;if(!date)return toast(tr('needDate'));
+  const type=$('type').value,category=type==='income'?'Дополнительный доход':$('category').value;
+  state.transactions.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type,date,amount,category,place:$('place').value.trim(),note:$('noteField').value.trim(),createdAt:Date.now()});
+  save();render();$('amount').value='';$('place').value='';$('noteField').value='';
+  if(type==='expense'){
+    const c=calc(),plan=Number(c.set.plans[category]||0),actual=Number(c.by[category]||0);
+    if(plan>0 && actual>=plan)toast(tr('categoryExceeded')(catLabel(category)));
+    else if(plan>0 && actual/plan*100>=Number(c.set.threshold||DEFAULT_THRESHOLD))toast(tr('categoryWarning')(catLabel(category)));
+    else toast(tr('added'));
+  }else toast(tr('added'));
+};
+$('rows').onclick=e=>{
+  const b=e.target.closest('[data-del]');
+  if(b&&confirm(tr('deleteConfirm'))){state.transactions=state.transactions.filter(t=>t.id!==b.dataset.del);save();render();toast(tr('deleted'))}
+};
+$('export').onclick=()=>{
+  const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+  a.href=u;a.download='moy-budget-backup.json';a.click();URL.revokeObjectURL(u);toast(tr('backup'));
+};
+$('import').onclick=()=>$('file').click();
+$('file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+    const x=JSON.parse(await f.text());if(!x||typeof x!=='object'||!Array.isArray(x.transactions))throw 0;
+    if(!confirm(tr('importConfirm')))return;
+    state={months:x.months&&typeof x.months==='object'?x.months:{},transactions:x.transactions};
+    ensureMonth(monthValue());save();render();toast(tr('imported'));
+  }catch(err){toast(tr('importFail'))}finally{e.target.value=''}
+};
+})();
+</script>
+</body>
+</html>
