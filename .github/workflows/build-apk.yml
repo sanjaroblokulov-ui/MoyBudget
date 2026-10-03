@@ -1,4 +1,4 @@
-name: Build MoyBudget APK
+name: Build MoyBudget Release APK
 
 on:
   workflow_dispatch:
@@ -22,16 +22,37 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-36 build-tools;35.0.1'
 
+      - name: Create temporary release keystore
+        env:
+          MOY_KEYSTORE_PASSWORD: MoyBudgetTest2026!
+        run: |
+          keytool -genkeypair -v \
+            -keystore release.keystore \
+            -storepass "$MOY_KEYSTORE_PASSWORD" \
+            -keypass "$MOY_KEYSTORE_PASSWORD" \
+            -alias moybudget-test \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Moy Budget Test, OU=MoyBudget, O=MoyBudget, L=Bukhara, ST=Bukhara, C=UZ"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
 
-      - name: Build APK
-        run: gradle --no-daemon assembleDebug
+      - name: Build signed release APK
+        env:
+          MOY_KEYSTORE_PASSWORD: MoyBudgetTest2026!
+          MOY_KEY_ALIAS: moybudget-test
+          MOY_KEY_PASSWORD: MoyBudgetTest2026!
+        run: gradle --no-daemon clean assembleRelease
 
-      - name: Upload APK
+      - name: Verify APK signature
+        run: $ANDROID_HOME/build-tools/35.0.1/apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: MoyBudget-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: MoyBudget-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
