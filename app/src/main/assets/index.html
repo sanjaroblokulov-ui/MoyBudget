@@ -231,8 +231,9 @@ body.light .pill{background:#e6edf6;color:#34527a}
         </div>
       </div>
       <div class="actions">
-        <button class="primary" type="submit" data-i18n="addRecord">＋ Добавить запись</button>
+        <button class="primary" type="submit" id="submitRecord" data-i18n="addRecord">＋ Добавить запись</button>
         <button class="secondary" type="reset" data-i18n="clear">Очистить</button>
+        <button class="secondary" type="button" id="cancelEdit" data-i18n="cancelEdit" hidden>Отменить редактирование</button>
       </div>
     </form>
   </div>
@@ -376,7 +377,7 @@ ru:{
  planTitlePrefix:'План расходов на',plannedHead:'План, сум',spentHead:'Потрачено',remainingHead:'Остаток',total:'ИТОГО',savePlans:'Сохранить план категорий',
  addOperation:'Добавить операцию',typeLabel:'Тип',expenseOption:'Расход',extraIncomeOption:'Дополнительный доход',
  dateLabel:'Дата покупки',dateNote:'Эта дата сохраняется вместе с покупкой.',amountLabel:'Сумма (сум)',categoryLabel:'Категория',placeLabel:'Магазин / место',commentLabel:'Комментарий',
- addRecord:'＋ Добавить запись',clear:'Очистить',byCategories:'Расходы по категориям',history:'История операций',
+ addRecord:'＋ Добавить запись',saveEdit:'Сохранить изменения',cancelEdit:'Отменить редактирование',edit:'Изменить',clear:'Очистить',byCategories:'Расходы по категориям',history:'История операций',
  dateHead:'Дата',categoryHead2:'Категория',detailsHead:'Детали',sumHead:'Сумма',
  noCats:'В этом месяце пока нет расходов.',empty:'Добавь первую запись за выбранный месяц.',
  footer:'Локальная версия · данные сохраняются в браузере этого устройства. Телефон и компьютер не синхронизируются автоматически.',
@@ -404,7 +405,7 @@ uz:{
  planTitlePrefix:'Xarajatlar rejasi —',plannedHead:'Reja, so‘m',spentHead:'Sarflandi',remainingHead:'Qoldiq',total:'JAMI',savePlans:'Kategoriya rejasini saqlash',
  addOperation:'Operatsiya qo‘shish',typeLabel:'Turi',expenseOption:'Xarajat',extraIncomeOption:'Qo‘shimcha daromad',
  dateLabel:'Xarid sanasi',dateNote:'Bu sana xarid bilan birga saqlanadi.',amountLabel:'Summa (so‘m)',categoryLabel:'Kategoriya',placeLabel:'Do‘kon / joy',commentLabel:'Izoh',
- addRecord:'＋ Yozuv qo‘shish',clear:'Tozalash',byCategories:'Kategoriyalar bo‘yicha xarajatlar',history:'Operatsiyalar tarixi',
+ addRecord:'＋ Yozuv qo‘shish',saveEdit:'O‘zgarishlarni saqlash',cancelEdit:'Tahrirlashni bekor qilish',edit:'Tahrirlash',clear:'Tozalash',byCategories:'Kategoriyalar bo‘yicha xarajatlar',history:'Operatsiyalar tarixi',
  dateHead:'Sana',categoryHead2:'Kategoriya',detailsHead:'Tafsilotlar',sumHead:'Summa',
  noCats:'Bu oyda hali xarajatlar yo‘q.',empty:'Tanlangan oy uchun birinchi yozuvni qo‘shing.',
  footer:'Lokal versiya · ma’lumotlar ushbu qurilmaning brauzerida saqlanadi. Telefon va kompyuter avtomatik sinxronlanmaydi.',
@@ -425,6 +426,7 @@ uz:{
 };
 let lang=localStorage.getItem(langKey)||'ru';
 let state={months:{},transactions:[]};
+let editingId=null;
 
 const tr=k=>(I18N[lang][k]??I18N.ru[k]??k);
 const catLabel=k=>lang==='uz'?(catUz[k]||k):k;
@@ -634,7 +636,7 @@ function render(){
     <td>${safe(displayDate(t.date))}</td><td><span class="pill">${safe(catLabel(t.category))}</span></td>
     <td>${safe([t.place,t.note].filter(Boolean).join(' · ')||(t.type==='income'?tr('extraIncome'):''))}</td>
     <td class="right" style="color:${t.type==='income'?'var(--green)':'var(--text)'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</td>
-    <td><button class="danger" data-del="${safe(t.id)}">Удалить</button></td>
+    <td style="white-space:nowrap"><button class="secondary" data-edit="${safe(t.id)}" style="padding:6px 9px;margin-right:4px">${safe(tr('edit'))}</button><button class="danger" data-del="${safe(t.id)}">${lang==='uz'?'O‘chirish':'Удалить'}</button></td>
   </tr>`).join('');
   $('empty').textContent=tr('empty');$('empty').hidden=sorted.length>0;$('count').textContent=tr('entries')(sorted.length);
   renderComparison();
@@ -678,11 +680,40 @@ $('savePlans').onclick=()=>{
   save();render();toast(`${tr('planSaved')}: ${monthName(monthValue())}`);
 };
 $('type').addEventListener('change',()=>{$('category').disabled=$('type').value==='income'});
+function resetForm(){
+  editingId=null;
+  $('submitRecord').textContent=tr('addRecord');
+  $('cancelEdit').hidden=true;
+  $('type').value='expense';
+  $('category').disabled=false;
+  $('form').reset();
+  $('date').value=dateStr(new Date());
+  $('category').selectedIndex=0;
+}
+function startEdit(id){
+  const t=state.transactions.find(x=>x.id===id);if(!t)return;
+  editingId=id;
+  $('type').value=t.type;
+  $('category').disabled=t.type==='income';
+  if(t.type==='expense')$('category').value=t.category;
+  $('date').value=t.date;
+  $('amount').value=t.amount;
+  $('place').value=t.place||'';
+  $('noteField').value=t.note||'';
+  $('submitRecord').textContent=tr('saveEdit');
+  $('cancelEdit').hidden=false;
+  $('form').scrollIntoView({behavior:'smooth',block:'center'});
+}
 $('form').onsubmit=e=>{
   e.preventDefault();
   const amount=Number($('amount').value);if(!amount||amount<0.01)return toast(tr('needAmount'));
   const date=$('date').value;if(!date)return toast(tr('needDate'));
   const type=$('type').value,category=type==='income'?'Дополнительный доход':$('category').value;
+  if(editingId){
+    const t=state.transactions.find(x=>x.id===editingId);if(!t)return resetForm();
+    t.type=type;t.date=date;t.amount=amount;t.category=category;t.place=$('place').value.trim();t.note=$('noteField').value.trim();
+    save();resetForm();render();toast(tr('saveEdit'));return;
+  }
   state.transactions.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),type,date,amount,category,place:$('place').value.trim(),note:$('noteField').value.trim(),createdAt:Date.now()});
   save();render();$('amount').value='';$('place').value='';$('noteField').value='';
   if(type==='expense'){
@@ -692,9 +723,13 @@ $('form').onsubmit=e=>{
     else toast(tr('added'));
   }else toast(tr('added'));
 };
+$('form').querySelector('button[type="reset"]').onclick=e=>{e.preventDefault();resetForm();render()};
+$('cancelEdit').onclick=()=>{resetForm();render()};
 $('rows').onclick=e=>{
+  const edit=e.target.closest('[data-edit]');
+  if(edit){startEdit(edit.dataset.edit);return}
   const b=e.target.closest('[data-del]');
-  if(b&&confirm(tr('deleteConfirm'))){state.transactions=state.transactions.filter(t=>t.id!==b.dataset.del);save();render();toast(tr('deleted'))}
+  if(b&&confirm(tr('deleteConfirm'))){state.transactions=state.transactions.filter(t=>t.id!==b.dataset.del);if(editingId===b.dataset.del)resetForm();save();render();toast(tr('deleted'))}
 };
 $('export').onclick=()=>{
   const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
