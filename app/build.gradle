@@ -8,12 +8,22 @@ android {
         applicationId 'uz.moybudget.app'
         minSdk 23
         targetSdk 36
-        versionCode 1
-        versionName '1.0'
+        versionCode 2
+        versionName '1.0.1'
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("${rootDir}/release.keystore")
+            storePassword System.getenv("MOY_KEYSTORE_PASSWORD")
+            keyAlias System.getenv("MOY_KEY_ALIAS")
+            keyPassword System.getenv("MOY_KEY_PASSWORD")
+        }
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
